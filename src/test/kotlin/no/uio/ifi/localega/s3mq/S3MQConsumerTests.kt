@@ -2,6 +2,7 @@ package no.uio.ifi.localega.s3mq
 
 import com.github.fridujo.rabbitmq.mock.MockConnectionFactory
 import com.rabbitmq.client.*
+import mu.KotlinLogging
 import no.uio.ifi.localega.s3mq.consumers.S3MQConsumer
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -59,6 +60,8 @@ const val MESSAGE_OUT =
     "{\"encrypted_checksums\":[{\"type\":\"sha256\",\"value\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}],\"file_last_modified\":1473374078,\"filepath\":\"FILE_PATH\",\"filesize\":200436,\"operation\":\"upload\",\"user\":\"USER_NAME\"}"
 
 class S3MQConsumerTests {
+
+    private val log = KotlinLogging.logger {}
 
     private val factory: ConnectionFactory = MockConnectionFactory()
     private val connection = factory.newConnection()
@@ -122,8 +125,11 @@ class S3MQConsumerTests {
         )
         TimeUnit.MILLISECONDS.sleep(1000L)
         assertTrue(messages.isNotEmpty())
-        val message = messages.iterator().next()
-        assertEquals(MESSAGE_OUT.replace("FILE_PATH", tempFile.absolutePath).replace("USER_NAME", bucket), message)
+        val expectedMessage = MESSAGE_OUT.replace("FILE_PATH", tempFile.absolutePath).replace("USER_NAME", bucket)
+        val actualMessage = messages.iterator().next()
+        log.info { "Expected: $expectedMessage" }
+        log.info { "Actual: $actualMessage" }
+        assertEquals(expectedMessage, actualMessage)
     }
 
     @AfterTest
