@@ -43,7 +43,7 @@ const val MESSAGE_IN = """
                "arn":"arn:aws:s3:::images"
             },
             "object":{
-               "key":"FILE_NAME",
+               "key":"OBJECT_KEY",
                "size":200436,
                "sequencer":"147279EAF9F40933"
             }
@@ -68,8 +68,10 @@ class S3MQConsumerTests {
     private val channel = connection.createChannel()
 
     private lateinit var inboxLocation: String
-    private lateinit var bucket: String
 
+    private lateinit var inboxDir: File
+    private lateinit var bucketDir: File
+    private lateinit var userDir: File
     private lateinit var tempFile: File
 
     @BeforeTest
@@ -90,9 +92,11 @@ class S3MQConsumerTests {
             ROUTING_KEY
         )
 
-        tempFile = createTempFile()
-        inboxLocation = tempFile.parentFile.parentFile.absolutePath
-        bucket = tempFile.parentFile.name
+        inboxDir = createTempDir(prefix = "inbox", suffix = "")
+        bucketDir = createTempDir(prefix = "bucket", suffix = "", directory = inboxDir)
+        userDir = createTempDir(prefix = "user", suffix = "", directory = bucketDir)
+        tempFile = createTempFile(directory = userDir)
+        inboxLocation = inboxDir.absolutePath
     }
 
     @Test
@@ -121,11 +125,14 @@ class S3MQConsumerTests {
             EXCHANGE_FROM,
             ROUTING_KEY,
             null,
-            MESSAGE_IN.replace("BUCKET_NAME", bucket).replace("FILE_NAME", tempFile.name).toByteArray(Charsets.UTF_8)
+            MESSAGE_IN.replace("BUCKET_NAME", bucketDir.name).replace(
+                "OBJECT_KEY",
+                userDir.name + "/" + tempFile.name
+            ).toByteArray(Charsets.UTF_8)
         )
         TimeUnit.MILLISECONDS.sleep(1000L)
         assertTrue(messages.isNotEmpty())
-        val expectedMessage = MESSAGE_OUT.replace("FILE_PATH", tempFile.absolutePath).replace("USER_NAME", bucket)
+        val expectedMessage = MESSAGE_OUT.replace("FILE_PATH", tempFile.absolutePath).replace("USER_NAME", userDir.name)
         val actualMessage = messages.iterator().next()
         log.info { "Expected: $expectedMessage" }
         log.info { "Actual: $actualMessage" }
@@ -135,6 +142,9 @@ class S3MQConsumerTests {
     @AfterTest
     fun tearDown() {
         tempFile.delete()
+        userDir.delete()
+        bucketDir.delete()
+        inboxDir.delete()
     }
 
 }

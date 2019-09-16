@@ -51,7 +51,7 @@ class S3MQConsumer(
                 filepath = s3ObjectDescriptor.path,
                 filesize = s3ObjectDescriptor.size,
                 operation = "upload", // only uploads are supported by TSD S3 implementation
-                user = s3ObjectDescriptor.bucket
+                user = s3ObjectDescriptor.key.substringBefore("/")
             )
             val inboxMessageJSON = gson.toJson(inboxMessage)
             log.info { "Publishing message: $inboxMessageJSON" }
@@ -86,7 +86,7 @@ class S3MQConsumer(
         val path = "$inboxLocation${bucketName}/${key}"
         val size = s3.objectX.size
             ?: throw JsonIOException("Message from S3 doesn't contain object size: $stringBody")
-        return S3ObjectDescriptor(bucketName, path, time, size)
+        return S3ObjectDescriptor(bucketName, key, path, time, size)
     }
 
     private fun calculateDigest(s3ObjectDescriptor: S3ObjectDescriptor): String? {
