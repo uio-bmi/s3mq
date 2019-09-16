@@ -8,7 +8,7 @@ This component converts AMQP message from S3 format to Local/Central EGA format.
 S3 message sample:
 
 ```json
-    {
+{
    "Records":[
       {
          "eventVersion":"2.0",
