@@ -57,7 +57,7 @@ const val MESSAGE_IN = """
 """
 
 const val MESSAGE_OUT =
-    "{\"encrypted_checksums\":[{\"type\":\"sha256\",\"value\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}],\"file_last_modified\":1473374078,\"filepath\":\"FILE_PATH\",\"filesize\":200436,\"operation\":\"upload\",\"user\":\"USER_NAME\"}"
+    """{"encrypted_checksums":[{"type":"sha256","value":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}],"file_last_modified":1473374078,"filepath":"FILE_PATH","filesize":200436,"operation":"upload","user":"USER_NAME"}"""
 
 class S3MQConsumerTests {
 
