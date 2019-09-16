@@ -12,13 +12,14 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.codec.digest.MessageDigestAlgorithms
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.net.URLDecoder
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 class S3MQConsumer(
     channel: Channel,
-    private val inboxLocation: String,
+    inboxLocation: String,
     private val exchangeTo: String,
     private val routingKey: String
 ) : DefaultConsumer(channel) {
@@ -26,6 +27,7 @@ class S3MQConsumer(
     private val log = KotlinLogging.logger {}
     private val gson = Gson()
 
+    private val inboxLocation = if (inboxLocation.endsWith("/")) inboxLocation else "$inboxLocation/"
 
     override fun handleDelivery(
         consumerTag: String,
@@ -77,8 +79,10 @@ class S3MQConsumer(
         val s3 = record.s3
         val bucketName = s3?.bucket?.name
             ?: throw JsonIOException("Message from S3 doesn't contain bucket name: $stringBody")
-        val key = s3.objectX?.key
-            ?: throw JsonIOException("Message from S3 doesn't contain object key: $stringBody")
+        val key = URLDecoder.decode(
+            s3.objectX?.key ?: throw JsonIOException("Message from S3 doesn't contain object key: $stringBody"),
+            Charsets.UTF_8.displayName()
+        )
         val path = "$inboxLocation${bucketName}/${key}"
         val size = s3.objectX.size
             ?: throw JsonIOException("Message from S3 doesn't contain object size: $stringBody")

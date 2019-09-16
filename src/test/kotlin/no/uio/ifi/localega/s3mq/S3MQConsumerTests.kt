@@ -92,9 +92,6 @@ class S3MQConsumerTests {
 
         tempFile = createTempFile()
         inboxLocation = tempFile.parentFile.parentFile.absolutePath
-        if (!inboxLocation.endsWith("/")) {
-            inboxLocation += "/"
-        }
         bucket = tempFile.parentFile.name
     }
 
