@@ -37,6 +37,10 @@ class S3MQConsumer(
     ) {
         try {
             val s3ObjectDescriptor = parseMessage(body)
+            if (s3ObjectDescriptor == null) {
+                channel.basicAck(envelope.deliveryTag, false)
+                return
+            }
             val digest = calculateDigest(s3ObjectDescriptor)
             val encryptedChecksum =
                 EncryptedChecksum(
@@ -68,24 +72,27 @@ class S3MQConsumer(
         }
     }
 
-    private fun parseMessage(byteBody: ByteArray): S3ObjectDescriptor {
+    private fun parseMessage(byteBody: ByteArray): S3ObjectDescriptor? {
         val stringBody = String(byteBody, Charsets.UTF_8)
         log.info { "Message received: $stringBody" }
         val message = gson.fromJson(stringBody, S3Message::class.java)
-        val record = message.records?.iterator()?.next()
-            ?: throw JsonIOException("Message from S3 doesn't contain any records: $stringBody")
+        val record =
+            message.records?.iterator()?.next() ?: throw JsonIOException("Message from S3 doesn't contain any records!")
+        val eventName = record.eventName ?: throw JsonIOException("Message from S3 doesn't contain event name!")
+        if (!eventName.startsWith("s3:ObjectCreated:")) {
+            log.warn { "Not s3:ObjectCreated event, skipping..." }
+            return null
+        }
         val time = ZonedDateTime.parse(record.eventTime, DateTimeFormatter.ISO_INSTANT.withZone(ZoneId.systemDefault()))
             .toOffsetDateTime().toEpochSecond()
         val s3 = record.s3
-        val bucketName = s3?.bucket?.name
-            ?: throw JsonIOException("Message from S3 doesn't contain bucket name: $stringBody")
+        val bucketName = s3?.bucket?.name ?: throw JsonIOException("Message from S3 doesn't contain bucket name!")
         val key = URLDecoder.decode(
-            s3.objectX?.key ?: throw JsonIOException("Message from S3 doesn't contain object key: $stringBody"),
+            s3.objectX?.key ?: throw JsonIOException("Message from S3 doesn't contain object key!"),
             Charsets.UTF_8.displayName()
         )
         val path = "$inboxLocation${bucketName}/${key}"
-        val size = s3.objectX.size
-            ?: throw JsonIOException("Message from S3 doesn't contain object size: $stringBody")
+        val size = s3.objectX.size ?: throw JsonIOException("Message from S3 doesn't contain object size!")
         return S3ObjectDescriptor(bucketName, key, path, time, size)
     }
 
