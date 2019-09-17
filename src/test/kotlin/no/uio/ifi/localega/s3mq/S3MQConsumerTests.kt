@@ -132,7 +132,7 @@ class S3MQConsumerTests {
         )
         TimeUnit.MILLISECONDS.sleep(1000L)
         assertTrue(messages.isNotEmpty())
-        val expectedMessage = MESSAGE_OUT.replace("FILE_PATH", tempFile.absolutePath).replace("USER_NAME", userDir.name)
+        val expectedMessage = MESSAGE_OUT.replace("FILE_PATH", tempFile.name).replace("USER_NAME", userDir.name)
         val actualMessage = messages.iterator().next()
         log.info { "Expected: $expectedMessage" }
         log.info { "Actual: $actualMessage" }

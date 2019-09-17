@@ -48,7 +48,7 @@ class S3MQConsumer(
             val inboxMessage = InboxMessage(
                 encryptedChecksums = listOf(encryptedChecksum),
                 fileLastModified = s3ObjectDescriptor.time,
-                filepath = s3ObjectDescriptor.path,
+                filepath = s3ObjectDescriptor.key.substringAfter("/"),
                 filesize = s3ObjectDescriptor.size,
                 operation = "upload", // only uploads are supported by TSD S3 implementation
                 user = s3ObjectDescriptor.key.substringBefore("/")
